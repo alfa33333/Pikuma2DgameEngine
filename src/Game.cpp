@@ -33,12 +33,12 @@ void Game::Initialize() {
         SDL_WINDOW_BORDERLESS    
     );
     if (!window){
-        std::cerr << "Error creating SDL window." << std::endl;
+        Logger::Err("Error creating SDL window.");
         return;
     }
     renderer = SDL_CreateRenderer(window,-1, 0);
     if (!renderer) {
-        std::cerr << "Error creating SDL renderer" << std::endl;
+        Logger::Err("Error creating SDL renderer");
     }
 
     SDL_SetWindowFullscreen(window,SDL_WINDOW_FULLSCREEN);
