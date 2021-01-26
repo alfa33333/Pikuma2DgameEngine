@@ -119,7 +119,7 @@ class Pool: public IPool {
         }
 
         T& Get(int index){
-            return static_cast<T&>data[index];
+            return static_cast<T&>(data[index]);
         }
 
         T& operator [](unsigned int index) {
