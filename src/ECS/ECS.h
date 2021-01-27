@@ -5,6 +5,8 @@
 #include <vector>
 #include <unordered_map>
 #include <typeindex>
+#include <set>
+#include <memory>
 
 const unsigned int MAX_COMPONENT = 32;
 
@@ -148,22 +150,33 @@ class Registry {
 
         std::unordered_map<std::type_index, System*> systems;
 
+        //Set of entities that are glagged to be added or removed in the next registry Update()
+        std::set<Entity> entitiesToBeAdded;
+        std::set<Entity> entitiesToBeKilled;
+
     public:
         Registry() = default;
+        
+        void Update();
+   
+        //entity management
+        Entity CreateEntity();
 
-        //TODO:
-        //CreateEntity()
-        //KillEntity()
-        // 
-        //AddComponent(Entity entity)
-        //RemoveComponent(Entity entity)
-        //HasComponent(Entity entity)
-        //GetComponent(Entity entity)
-        //
-        //AddSystem()
-        //RemoveSystem()
-        //HasSystem()
-        //GetSystem()
+        // component management
+        template <typename TComponent, typename ...TArgs> void AddComponent(Entity entity, TArgs&& ...args);
+        template <typename TComponent> void RemoveComponent(Entity entity);
+        template <typename TComponent> bool HasComponent(Entity entity) const;
+
+        //System management
+        template <typename TSystem, typename ...TArgs> void AddSystem(TArgs&& ...args);
+        template <typename TSystem> void RemoveSystem();
+        template <typename TSystem> bool HasSystem() const;
+        template <typename TSystem> TSystem& GetSystem() const;
+
+        //Check the component signature of an entity and add the entityt to the systems
+        //that are interested in it
+        void AddEntityToSystems(Entity entity);
+
 };
 
 //Templates are implemented in the .h file
@@ -173,5 +186,70 @@ void System::RequiredComponent() {
     componentSignature.set(componentId);
 
 }
+
+template <typename TSystem, typename ...TArgs>
+void Registry::AddSystem(TArgs&& ...args){
+    TSystem* newSystem(new TSystem(std::forward<TArgs>(args)...)); //fix raw pointer
+    systems.insert(std::make_pair(std::type_index(typeid(TSystem)),newSystem));
+}
+
+template <typename TSystem>
+void Registry::RemoveSystem(){
+    auto system = systems.find(std::type_index(typeid(TSystem)));
+    systems.erase(system);
+}
+
+template <typename TSystem> 
+bool Registry::HasSystem() const {
+    return systems.find(std::type_index(typeid(TSystem))) != systems.end();
+}
+
+template <typename TSystem> 
+TSystem& Registry::GetSystem() const{
+    auto system = system.find(std::type_index(typeid(TSystem)));
+    return *(std::static_pointer_cast<TSystem>(system->second()));
+}
+
+
+template <typename TComponent, typename ...TArgs> 
+void Registry::AddComponent(Entity entity, TArgs&& ...args){
+    const auto componentId = Component<TComponent>::GetId();
+    const auto entityId = entity.Getid();
+
+    if (componentId >= componentPools.size()){
+        componentPools.resize(componentId + 1, nullptr);
+    }
+
+    if (!componentPools[componentId]){
+        Pool<TComponent>* newComponentPool = new Pool<TComponent>(); //smart pointers will be used later
+        componentPools[componentId] = newComponentPool;
+    }
+
+    Pool<TComponent>* componentPool = componentPools[componentId];
+
+    if (entityId >= componentPool->GetSize()) {
+        componentPool->Resize(numEntities);
+    }
+
+    TComponent newComponent(std::forward<TArgs>(args)...);
+
+    componentPool->Set(entityId, newComponent);
+    entityComponentSignatures[entityId].set(componentId);
+}
+
+template <typename TComponent> 
+void Registry::RemoveComponent(Entity entity){
+    const auto componentId = Component<TComponent>::GetId();
+    const auto entityId = entity.Getid();
+    entityComponentSignatures[entityId].set(componentId,false);
+}
+
+template <typename TComponent> 
+bool Registry::HasComponent(Entity entity) const{
+    const auto componentId = Component<TComponent>::GetId();
+    const auto entityId =  entity.Getid();
+    return entityComponentSignatures[entityId].test(componentId);
+}
+
 
 #endif
