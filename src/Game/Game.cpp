@@ -1,6 +1,9 @@
 #include "Game.h"
 #include "../Logger/Logger.h"
 #include "../ECS/ECS.h"
+#include "../Components/TransformComponent.h"
+#include "../Components/RigidBodyComponent.h"
+#include "../Systems/MovementSystem.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <glm/glm.hpp>
@@ -9,7 +12,7 @@
 
 Game::Game() {
     isRunning = false;
-    registry = new Registry();
+    registry = std::make_unique<Registry>();
     Logger::Log("Game constructor called");
 }
 
@@ -77,9 +80,22 @@ void Game::ProcessInput() {
 
 
 void Game::Setup() {
+    //Add the systems that ned to be processed in our game
+    registry->AddSystem<MovementSystem>();
+
     // Create some entities
     Entity tank = registry->CreateEntity();
-    Entity truck = registry->CreateEntity();
+
+    //add some components
+    //registry->AddComponent<TransformComponent>(tank, glm::vec2(10.0, 30.0), glm::vec2(1.0,1.0), 0.0);
+    //registry->AddComponent<RigidBodyComponent>(tank, glm::vec2(50.0, 0.0));
+
+    tank.AddComponent<TransformComponent>(glm::vec2(10.0, 30.0), glm::vec2(1.0,1.0), 0.0);
+    tank.AddComponent<RigidBodyComponent>(glm::vec2(10.0,50.0));
+
+    //Removing component
+    //tank.RemoveComponent<TransformComponent>();
+    //Entity truck = registry->CreateEntity();
     //TODO:
     // Entity tank = registry.CreateEntity();
     // tank.AddComponent<TransformComponent>();
@@ -100,10 +116,16 @@ void Game::Update() {
     
     millisecsPreviousFrame = SDL_GetTicks();
 
+    //Ask al the system to update
+    registry->GetSystem<MovementSystem>().Update();
     //TODO:
-    // MovementSystem.Update();
     // CollisionSystem.Update();
     // DamageSystem.Update();
+
+    //Update the registry to process the entitis that are waiting to be created/deleted
+
+    registry->Update();
+
 }
 
 void Game::Render(){
