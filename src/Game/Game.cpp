@@ -3,7 +3,9 @@
 #include "../ECS/ECS.h"
 #include "../Components/TransformComponent.h"
 #include "../Components/RigidBodyComponent.h"
+#include "../Components/SpriteComponent.h"
 #include "../Systems/MovementSystem.h"
+#include "../Systems/RenderSystem.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <glm/glm.hpp>
@@ -13,6 +15,7 @@
 Game::Game() {
     isRunning = false;
     registry = std::make_unique<Registry>();
+    assetStore =std::make_unique<AssetStore>();
     Logger::Log("Game constructor called");
 }
 
@@ -82,16 +85,22 @@ void Game::ProcessInput() {
 void Game::Setup() {
     //Add the systems that ned to be processed in our game
     registry->AddSystem<MovementSystem>();
+    registry->AddSystem<RenderSystem>();
+
+    //adding assets to the asset store
+    assetStore->AddTexture(renderer, "tank-image", "./assets/images/tank-panther-right.png");
+    assetStore->AddTexture(renderer, "truck-image", "./assets/images/truck-ford-right.png");
 
     // Create some entities
     Entity tank = registry->CreateEntity();
-
-    //add some components
-    //registry->AddComponent<TransformComponent>(tank, glm::vec2(10.0, 30.0), glm::vec2(1.0,1.0), 0.0);
-    //registry->AddComponent<RigidBodyComponent>(tank, glm::vec2(50.0, 0.0));
-
     tank.AddComponent<TransformComponent>(glm::vec2(10.0, 30.0), glm::vec2(1.0,1.0), 0.0);
-    tank.AddComponent<RigidBodyComponent>(glm::vec2(10.0,50.0));
+    tank.AddComponent<RigidBodyComponent>(glm::vec2(40.0,0.0));
+    tank.AddComponent<SpriteComponent>("tank-image", 10, 10);
+
+    Entity truck = registry->CreateEntity();
+    truck.AddComponent<TransformComponent>(glm::vec2(50.0, 100.0), glm::vec2(1.0,1.0), 0.0);
+    truck.AddComponent<RigidBodyComponent>(glm::vec2(0.0,50.0));
+    truck.AddComponent<SpriteComponent>("truck-image", 10, 50);
 
     //Removing component
     //tank.RemoveComponent<TransformComponent>();
@@ -116,15 +125,16 @@ void Game::Update() {
     
     millisecsPreviousFrame = SDL_GetTicks();
 
-    //Ask al the system to update
-    registry->GetSystem<MovementSystem>().Update();
+    registry->Update();
+    //Ask all the system to update
+    registry->GetSystem<MovementSystem>().Update(deltaTime);
     //TODO:
     // CollisionSystem.Update();
     // DamageSystem.Update();
 
     //Update the registry to process the entitis that are waiting to be created/deleted
 
-    registry->Update();
+    
 
 }
 
@@ -132,6 +142,7 @@ void Game::Render(){
     SDL_SetRenderDrawColor(renderer, 21, 21, 21, 255);
     SDL_RenderClear(renderer);
 
+    registry->GetSystem<RenderSystem>().Update(renderer);
     //TODO:
     // //Draw a PNG texture
     // SDL_Surface* surface = IMG_Load("./assets/images/tank-tiger-right.png");
