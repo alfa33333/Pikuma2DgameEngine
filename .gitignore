@@ -1,3 +1,7 @@
+#assets folders
+libs/
+assets/
+
 # Prerequisites
 *.d
 
