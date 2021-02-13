@@ -80,16 +80,23 @@ void Game::ProcessInput() {
     }
 }
 
-
-
-void Game::Setup() {
-    //Add the systems that ned to be processed in our game
+void Game::LoadLevel(int level){
+   //Add the systems that ned to be processed in our game
     registry->AddSystem<MovementSystem>();
     registry->AddSystem<RenderSystem>();
 
     //adding assets to the asset store
     assetStore->AddTexture(renderer, "tank-image", "./assets/images/tank-panther-right.png");
     assetStore->AddTexture(renderer, "truck-image", "./assets/images/truck-ford-right.png");
+
+    //TODO:
+    //Load the tilemap
+    //We need to load the tile map texture from ./asssets/tilemaps/jungle.png
+    assetStore->AddTexture(renderer, "jungle-tilemap", "./assets/tilemaps/jungle.png");
+    //We need to load the file ./assets/tilemaps/jungle.map
+    // TIP: You can use the idea of the source rectangle
+    //Tip: consider creating one entity per tile
+
 
     // Create some entities
     Entity tank = registry->CreateEntity();
@@ -102,14 +109,14 @@ void Game::Setup() {
     truck.AddComponent<RigidBodyComponent>(glm::vec2(0.0,50.0));
     truck.AddComponent<SpriteComponent>("truck-image", 32, 32);
 
-    //Removing component
-    //tank.RemoveComponent<TransformComponent>();
-    //Entity truck = registry->CreateEntity();
-    //TODO:
-    // Entity tank = registry.CreateEntity();
-    // tank.AddComponent<TransformComponent>();
-    // tank.AddComponent<BoxColliderComponent>();
-    // tank.AddComponent<SpriteComponent>("./assets/images/tank.png");
+    Entity tilemap = registry->CreateEntity();
+    tilemap.AddComponent<TransformComponent>(glm::vec2(0.0, 0.0), glm::vec2(1.0,1.0), 0.0);
+    tilemap.AddComponent<SpriteComponent>("jungle-tilemap", 32, 32, 0, 0);
+}
+
+
+void Game::Setup() {
+    LoadLevel(1);
 }
 
 void Game::Update() {
