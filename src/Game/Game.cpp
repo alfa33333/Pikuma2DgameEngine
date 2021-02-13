@@ -97,7 +97,6 @@ void Game::LoadLevel(int level){
     // TIP: You can use the idea of the source rectangle
     //Tip: consider creating one entity per tile
 
-
     // Create some entities
     Entity tank = registry->CreateEntity();
     tank.AddComponent<TransformComponent>(glm::vec2(10.0, 10.0), glm::vec2(1.0,1.0), 0.0);
