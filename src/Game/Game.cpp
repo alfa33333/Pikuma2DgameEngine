@@ -10,6 +10,7 @@
 #include <SDL2/SDL_image.h>
 #include <glm/glm.hpp>
 #include <iostream>
+#include <fstream>
 
 
 Game::Game() {
@@ -93,9 +94,31 @@ void Game::LoadLevel(int level){
     //Load the tilemap
     //We need to load the tile map texture from ./asssets/tilemaps/jungle.png
     assetStore->AddTexture(renderer, "jungle-tilemap", "./assets/tilemaps/jungle.png");
-    //We need to load the file ./assets/tilemaps/jungle.map
-    // TIP: You can use the idea of the source rectangle
-    //Tip: consider creating one entity per tile
+    //Load the tile map
+    int tileSize = 32;
+    double tileScale = 1.0;
+    int mapNumCols = 25;
+    int mapNumRows = 20;
+
+    std::fstream mapFile;
+    mapFile.open("./assets/tilemaps/jungle.map");
+
+    for (int y = 0; y < mapNumRows; y++){
+        for(int x = 0; x < mapNumCols; x++){
+            char ch;
+            mapFile.get(ch);
+            int srcRectY = std::atoi(&ch) * tileSize;
+            mapFile.get(ch);
+            int srcRectX = std::atoi(&ch) * tileSize;
+            mapFile.ignore();
+
+            Entity tile = registry->CreateEntity();
+            tile.AddComponent<TransformComponent>(glm::vec2(x * (tileScale * tileSize), y * (tileScale * tileSize)), glm::vec2(tileScale,tileScale),0.0);
+            tile.AddComponent<SpriteComponent>("jungle-tilemap", tileSize, tileSize, srcRectX,srcRectY);
+        }
+    }
+
+    mapFile.close();
 
     // Create some entities
     Entity tank = registry->CreateEntity();
@@ -108,9 +131,6 @@ void Game::LoadLevel(int level){
     truck.AddComponent<RigidBodyComponent>(glm::vec2(0.0,50.0));
     truck.AddComponent<SpriteComponent>("truck-image", 32, 32);
 
-    Entity tilemap = registry->CreateEntity();
-    tilemap.AddComponent<TransformComponent>(glm::vec2(0.0, 0.0), glm::vec2(1.0,1.0), 0.0);
-    tilemap.AddComponent<SpriteComponent>("jungle-tilemap", 32, 32, 0, 0);
 }
 
 

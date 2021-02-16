@@ -1,6 +1,7 @@
 #assets folders
 libs/
 assets/
+.vscode
 
 # Prerequisites
 *.d
