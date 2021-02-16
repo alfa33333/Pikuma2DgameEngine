@@ -10,6 +10,9 @@
 #include <SDL2/SDL_image.h>
 #include <glm/glm.hpp>
 #include <iostream>
+// my includes
+#include <fstream>
+#include <sstream>
 
 
 Game::Game() {
@@ -96,6 +99,47 @@ void Game::LoadLevel(int level){
     //We need to load the file ./assets/tilemaps/jungle.map
     // TIP: You can use the idea of the source rectangle
     //Tip: consider creating one entity per tile
+    ///////////////////////////////////////////////////
+    //
+    std::vector<std::vector<std::string>> data;
+    std::ifstream infile("./assets/tilemaps/jungle.map");
+
+    while(infile){
+        std::string s;
+        if (!std::getline(infile, s)) break;
+        
+        
+        std::istringstream ss( s );
+        std::vector <std::string> record;
+        while(ss){
+            std::string s;
+            if (!std::getline(ss,s,',')) break;
+            record.push_back(s);
+        }
+
+        data.push_back(record);
+    }
+    if (!infile.eof())
+    {
+        std::cerr << "Fooey!\n";
+    }
+
+    
+
+    ///////////////////////////////////////////////////
+
+    std::vector<Entity> tilemap;
+    int rowMaxSize = static_cast<int>(data.size());
+    for(int i = 0; i < static_cast<int>(data[0].size()); i++){
+        for(int j = 0; j < static_cast<int>(data.size()); j++){
+            int tile = std::stoi(data[j][i]);
+            int deltaY = tile/10;
+            int deltaX = tile%10;
+            tilemap.push_back(registry->CreateEntity());
+            tilemap[rowMaxSize*i+j].AddComponent<TransformComponent>(glm::vec2(32*i, 32*j), glm::vec2(1.0,1.0), 0.0);
+            tilemap[rowMaxSize*i+j].AddComponent<SpriteComponent>("jungle-tilemap", 32, 32, 32*deltaX, 32*deltaY);
+        }
+    }
 
     // Create some entities
     Entity tank = registry->CreateEntity();
@@ -108,9 +152,7 @@ void Game::LoadLevel(int level){
     truck.AddComponent<RigidBodyComponent>(glm::vec2(0.0,50.0));
     truck.AddComponent<SpriteComponent>("truck-image", 32, 32);
 
-    Entity tilemap = registry->CreateEntity();
-    tilemap.AddComponent<TransformComponent>(glm::vec2(0.0, 0.0), glm::vec2(1.0,1.0), 0.0);
-    tilemap.AddComponent<SpriteComponent>("jungle-tilemap", 32, 32, 0, 0);
+
 }
 
 
